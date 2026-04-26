@@ -23,17 +23,21 @@ def detect_insect():
     openai_url = "https://api.openai.com/v1/chat/completions"
 
     payload = {
-        "model": "gpt-4o-mini",  # Corrected model name
-        "max_tokens": 800,
-        "messages": [{
-            "role": "user",
-            "content": [
-                {"type": "text",
-                 "text": "You are an expert entomologist. Identify this insect and return ONLY a JSON object with keys: common_name, scientific_name, description, habitat, and threat_level."},
-                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
-            ]
-        }]
-    }
+    "model": "gpt-4o-mini",
+    "messages": [{
+        "role": "user",
+        "content": [
+            {
+                "type": "text", 
+                "text": "Identify the insect in this image. Return ONLY a JSON object with these EXACT keys: name, scientificName, kingdom, phylum, class_name, order, family, genus, species, confidence, dangerLevel, schoolRiskLevel, diet, lifespan, habitat, populationStatus, description."
+            },
+            {
+                "type": "image_url", 
+                "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}
+            }
+        ]
+    }]
+}
 
     try:
         response = requests.post(
