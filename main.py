@@ -38,6 +38,18 @@ def detect_insect():
     data = request.json
     base64_image = data.get('image')
 
+@app.route('/debug', methods=['POST'])
+def debug():
+    data = request.json
+    image = data.get('image', '')
+    return jsonify({
+        "received": True,
+        "image_length": len(image),
+        "starts_with": image[:50] if image else "empty",
+        "has_prefix": image.startswith('data:image') if image else False
+    }), 200
+    
+
     if not base64_image:
         response = UNKNOWN_RESPONSE.copy()
         response["insect_name"] = "No Image"
