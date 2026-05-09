@@ -8,28 +8,41 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+UNKNOWN_RESPONSE = {
+    "insect_name": "Unknown Insect",
+    "biological_name": "Unknown",
+    "genus": "Unknown",
+    "species": "Unknown",
+    "classification": {
+        "kingdom": "Unknown",
+        "phylum": "Unknown",
+        "class": "Unknown",
+        "order": "Unknown",
+        "family": "Unknown",
+        "genus": "Unknown",
+        "species": "Unknown"
+    },
+    "confidence": 0,
+    "danger_level": "unknown",
+    "school_risk_level": "unknown",
+    "diet": "Unknown",
+    "lifespan": "Unknown",
+    "habitat": "Unknown",
+    "population": "Unknown",
+    "economic_importance": "Unable to determine.",
+    "bio": "Unable to process the image. Please try again."
+}
+
 @app.route('/detect', methods=['POST'])
 def detect_insect():
     data = request.json
     base64_image = data.get('image')
 
     if not base64_image:
-        return jsonify({
-            "insect_name": "No Image",
-            "biological_name": "Unknown",
-            "genus": "Unknown",
-            "species": "Unknown",
-            "classification": {"kingdom": "Unknown", "phylum": "Unknown", "class": "Unknown", "order": "Unknown", "family": "Unknown", "genus": "Unknown", "species": "Unknown"},
-            "confidence": 0,
-            "danger_level": "unknown",
-            "school_risk_level": "unknown",
-            "diet": "Unknown",
-            "lifespan": "Unknown",
-            "habitat": "Unknown",
-            "population": "Unknown",
-            "economic_importance": "Unable to determine.",
-            "bio": "No image was provided. Please upload a photo of an insect."
-        }), 200
+        response = UNKNOWN_RESPONSE.copy()
+        response["insect_name"] = "No Image"
+        response["bio"] = "No image was provided. Please upload a photo of an insect."
+        return jsonify(response), 200
 
     if not base64_image.startswith('data:image'):
         base64_image = f"data:image/jpeg;base64,{base64_image}"
@@ -45,14 +58,21 @@ def detect_insect():
             "content": [
                 {
                     "type": "text",
-                    "text": """You are an expert entomologist. Identify the insect in this image.
+                    "text": """You are an expert entomologist with advanced image analysis capabilities. Identify the insect in this image.
 
-IMPORTANT RULES:
+IMPORTANT RULES ABOUT IMAGE QUALITY:
+- Accept ALL real-world photos including phone camera shots, outdoor photos, indoor photos, close-ups, and slightly blurry images
+- Do NOT reject an image just because it is not perfect quality
+- Do NOT complain about image size, resolution, or file format
+- Make your best identification even from imperfect photos — this is what field entomologists do
+- Only return Unknown Insect if the insect is genuinely impossible to identify after your best effort
+
+IMPORTANT RULES ABOUT IDENTIFICATION:
 1. If the image does not contain an insect at all, or contains a human, food, object or scenery — set insect_name to "No Insect Detected" and bio to "No insect was found in this image. Please upload a clear photo of an insect."
 
-2. If the image contains an insect but is too blurry, too dark, too far away, or the insect is too small to identify confidently — set insect_name to "Unknown Insect" and bio to "The image is not clear enough for identification. Please take a closer photo in good lighting with the insect centered in the frame."
+2. If you genuinely cannot identify the insect even after your best effort due to extreme blurriness or darkness — set insect_name to "Unknown Insect" and bio to "The image is not clear enough for identification. Please take a closer photo in good lighting with the insect centered in the frame."
 
-3. If the insect is clearly visible and identifiable — fill in ALL fields completely and accurately. Never leave any field as null or empty.
+3. For ALL real photos including phone camera shots, outdoor snaps, and close-ups — make your best identification and fill in ALL fields completely and accurately. Never leave any field as null or empty.
 
 In ALL cases return ONLY this raw JSON structure with no markdown and no backticks:
 {
@@ -103,22 +123,10 @@ In ALL cases return ONLY this raw JSON structure with no markdown and no backtic
         res_json = response.json()
 
         if "error" in res_json:
-            return jsonify({
-                "insect_name": "Connection Issue",
-                "biological_name": "Unknown",
-                "genus": "Unknown",
-                "species": "Unknown",
-                "classification": {"kingdom": "Unknown", "phylum": "Unknown", "class": "Unknown", "order": "Unknown", "family": "Unknown", "genus": "Unknown", "species": "Unknown"},
-                "confidence": 0,
-                "danger_level": "unknown",
-                "school_risk_level": "unknown",
-                "diet": "Unknown",
-                "lifespan": "Unknown",
-                "habitat": "Unknown",
-                "population": "Unknown",
-                "economic_importance": "Unable to determine.",
-                "bio": "The AI is currently busy. Please try again in a moment."
-            }), 200
+            error_response = UNKNOWN_RESPONSE.copy()
+            error_response["insect_name"] = "Connection Issue"
+            error_response["bio"] = "The AI is currently busy. Please try again in a moment."
+            return jsonify(error_response), 200
 
         raw_content = res_json['choices'][0]['message']['content']
         cleaned = re.sub(r'```json|```', '', raw_content).strip()
@@ -127,40 +135,16 @@ In ALL cases return ONLY this raw JSON structure with no markdown and no backtic
         return jsonify(result), 200
 
     except requests.exceptions.Timeout:
-        return jsonify({
-            "insect_name": "Request Timed Out",
-            "biological_name": "Unknown",
-            "genus": "Unknown",
-            "species": "Unknown",
-            "classification": {"kingdom": "Unknown", "phylum": "Unknown", "class": "Unknown", "order": "Unknown", "family": "Unknown", "genus": "Unknown", "species": "Unknown"},
-            "confidence": 0,
-            "danger_level": "unknown",
-            "school_risk_level": "unknown",
-            "diet": "Unknown",
-            "lifespan": "Unknown",
-            "habitat": "Unknown",
-            "population": "Unknown",
-            "economic_importance": "Unable to determine.",
-            "bio": "The request took too long. Please try again with a smaller or clearer image."
-        }), 200
+        timeout_response = UNKNOWN_RESPONSE.copy()
+        timeout_response["insect_name"] = "Request Timed Out"
+        timeout_response["bio"] = "The request took too long. Please try again with a smaller or clearer image."
+        return jsonify(timeout_response), 200
 
     except Exception as e:
-        return jsonify({
-            "insect_name": "Image Unclear",
-            "biological_name": "Unknown",
-            "genus": "Unknown",
-            "species": "Unknown",
-            "classification": {"kingdom": "Unknown", "phylum": "Unknown", "class": "Unknown", "order": "Unknown", "family": "Unknown", "genus": "Unknown", "species": "Unknown"},
-            "confidence": 0,
-            "danger_level": "unknown",
-            "school_risk_level": "unknown",
-            "diet": "Unknown",
-            "lifespan": "Unknown",
-            "habitat": "Unknown",
-            "population": "Unknown",
-            "economic_importance": "Unable to determine.",
-            "bio": "I couldn't quite make that out. Please ensure the insect is centered and well-lit."
-        }), 200
+        error_response = UNKNOWN_RESPONSE.copy()
+        error_response["insect_name"] = "Image Unclear"
+        error_response["bio"] = "I couldn't quite make that out. Please ensure the insect is centered and well-lit."
+        return jsonify(error_response), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
