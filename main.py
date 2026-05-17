@@ -33,44 +33,46 @@ UNKNOWN_RESPONSE = {
     "bio": "Unable to process the image. Please try again."
 }
 
+@app.route('/', methods=['GET'])
+def health():
+    api_key = os.environ.get("OPENAI_API_KEY")
+    return jsonify({
+        "status": "running",
+        "api_key_set": bool(api_key)
+    }), 200
+
 @app.route('/detect', methods=['POST'])
 def detect_insect():
-    data = request.json
-    base64_image = data.get('image')
+    try:
+        data = request.json
 
-@app.route('/debug', methods=['POST'])
-def debug():
-    data = request.json
-    image = data.get('image', '')
-    return jsonify({
-        "received": True,
-        "image_length": len(image),
-        "starts_with": image[:50] if image else "empty",
-        "has_prefix": image.startswith('data:image') if image else False
-    }), 200
-    
+        if not data:
+            return jsonify({**UNKNOWN_RESPONSE, "insect_name": "No Data", "bio": "No data was received. Please try again."}), 200
 
-    if not base64_image:
-        response = UNKNOWN_RESPONSE.copy()
-        response["insect_name"] = "No Image"
-        response["bio"] = "No image was provided. Please upload a photo of an insect."
-        return jsonify(response), 200
+        base64_image = data.get('image')
 
-    if not base64_image.startswith('data:image'):
-        base64_image = f"data:image/jpeg;base64,{base64_image}"
+        if not base64_image:
+            return jsonify({**UNKNOWN_RESPONSE, "insect_name": "No Image", "bio": "No image was provided. Please upload a photo of an insect."}), 200
 
-    api_key = os.environ.get("OPENAI_API_KEY")
-    openai_url = "https://api.openai.com/v1/chat/completions"
+        if not base64_image.startswith('data:image'):
+            base64_image = f"data:image/jpeg;base64,{base64_image}"
 
-    payload = {
-        "model": "gpt-4o-mini",
-        "max_tokens": 1000,
-        "messages": [{
-            "role": "user",
-            "content": [
-                {
-                    "type": "text",
-                    "text": """You are an expert entomologist with advanced image analysis capabilities. Identify the insect in this image.
+        api_key = os.environ.get("OPENAI_API_KEY")
+
+        if not api_key:
+            return jsonify({**UNKNOWN_RESPONSE, "insect_name": "Server Error", "bio": "API key not configured on server."}), 200
+
+        openai_url = "https://api.openai.com/v1/chat/completions"
+
+        payload = {
+            "model": "gpt-4o-mini",
+            "max_tokens": 1000,
+            "messages": [{
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": """You are an expert entomologist with advanced image analysis capabilities. Identify the insect in this image.
 
 IMPORTANT RULES ABOUT IMAGE QUALITY:
 - Accept ALL real-world photos including phone camera shots, outdoor photos, indoor photos, close-ups, and slightly blurry images
@@ -111,17 +113,15 @@ In ALL cases return ONLY this raw JSON structure with no markdown and no backtic
   "economic_importance": "economic impact or Unable to determine",
   "bio": "description or reason why identification failed"
 }"""
-                },
-                {
-                    "type": "image_url",
-                    "image_url": {"url": base64_image}
-                }
-            ]
-        }]
-    }
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": base64_image}
+                    }
+                ]
+            }]
+        }
 
-    res_json = None
-    try:
         response = requests.post(
             openai_url,
             headers={
@@ -135,10 +135,7 @@ In ALL cases return ONLY this raw JSON structure with no markdown and no backtic
         res_json = response.json()
 
         if "error" in res_json:
-            error_response = UNKNOWN_RESPONSE.copy()
-            error_response["insect_name"] = "Connection Issue"
-            error_response["bio"] = "The AI is currently busy. Please try again in a moment."
-            return jsonify(error_response), 200
+            return jsonify({**UNKNOWN_RESPONSE, "insect_name": "Connection Issue", "bio": "The AI is currently busy. Please try again in a moment."}), 200
 
         raw_content = res_json['choices'][0]['message']['content']
         cleaned = re.sub(r'```json|```', '', raw_content).strip()
@@ -147,16 +144,10 @@ In ALL cases return ONLY this raw JSON structure with no markdown and no backtic
         return jsonify(result), 200
 
     except requests.exceptions.Timeout:
-        timeout_response = UNKNOWN_RESPONSE.copy()
-        timeout_response["insect_name"] = "Request Timed Out"
-        timeout_response["bio"] = "The request took too long. Please try again with a smaller or clearer image."
-        return jsonify(timeout_response), 200
+        return jsonify({**UNKNOWN_RESPONSE, "insect_name": "Request Timed Out", "bio": "The request took too long. Please try again with a smaller or clearer image."}), 200
 
     except Exception as e:
-        error_response = UNKNOWN_RESPONSE.copy()
-        error_response["insect_name"] = "Image Unclear"
-        error_response["bio"] = "I couldn't quite make that out. Please ensure the insect is centered and well-lit."
-        return jsonify(error_response), 200
+        return jsonify({**UNKNOWN_RESPONSE, "insect_name": "Error", "bio": f"Something went wrong: {str(e)}"}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
