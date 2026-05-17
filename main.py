@@ -148,6 +148,10 @@ In ALL cases return ONLY this raw JSON structure with no markdown and no backtic
 
     except Exception as e:
         return jsonify({**UNKNOWN_RESPONSE, "insect_name": "Error", "bio": f"Something went wrong: {str(e)}"}), 200
-
-if __name__ == '__main__':
+        
+        if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+@app.route('/detect', methods=['POST'])
+def detect_insect():
+    # TEMPORARILY DISABLED - remove this line to re-enable
+    return jsonify({**UNKNOWN_RESPONSE, "insect_name": "Service Unavailable", "bio": "Service is temporarily unavailable. Please check back soon."}), 200
