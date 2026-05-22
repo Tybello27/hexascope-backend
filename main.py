@@ -103,7 +103,7 @@ In ALL cases return ONLY this raw JSON structure with no markdown and no backtic
     "genus": "fill or Unknown",
     "species": "fill or Unknown"
   },
-  "confidence": 0.95,
+  "confidence": (a decimal between 0.0 and 1.0 based on how clearly you can identify the insect — be honest, do not always give high confidence. e.g. 0.6 for uncertain, 0.85 for fairly confident, 0.97 for very confident),
   "danger_level": "low or medium or high or unknown",
   "school_risk_level": "low or medium or high or unknown",
   "diet": "what it eats or Unknown",
