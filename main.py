@@ -80,13 +80,15 @@ IMPORTANT RULES ABOUT IMAGE QUALITY:
 - Do NOT complain about image size, resolution, or file format
 - Make your best identification even from imperfect photos — this is what field entomologists do
 - Only return Unknown Insect if the insect is genuinely impossible to identify after your best effort
+- If an insect is being held by human hands or gloves, focus ONLY on the insect itself and ignore the hands completely. Identify the insect as if the hands were not there
+- A grasshopper, beetle, or any insect held between fingers is still fully identifiable — do not return Unknown just because hands are present in the frame
 
 IMPORTANT RULES ABOUT IDENTIFICATION:
-1. If the image does not contain an insect at all, or contains a human, food, object or scenery — set insect_name to "No Insect Detected" and bio to "No insect was found in this image. Please upload a clear photo of an insect."
+1. If the image does not contain an insect at all, or contains ONLY a human, food, object or scenery with no insect present — set insect_name to "No Insect Detected" and bio to "No insect was found in this image. Please upload a clear photo of an insect."
 
 2. If you genuinely cannot identify the insect even after your best effort due to extreme blurriness or darkness — set insect_name to "Unknown Insect" and bio to "The image is not clear enough for identification. Please take a closer photo in good lighting with the insect centered in the frame."
 
-3. For ALL real photos including phone camera shots, outdoor snaps, and close-ups — make your best identification and fill in ALL fields completely and accurately. Never leave any field as null or empty.
+3. For ALL real photos including phone camera shots, outdoor snaps, close-ups, and insects being held — make your best identification and fill in ALL fields completely and accurately. Never leave any field as null or empty.
 
 In ALL cases return ONLY this raw JSON structure with no markdown and no backticks:
 {
